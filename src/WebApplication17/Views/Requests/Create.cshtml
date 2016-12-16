@@ -1,0 +1,80 @@
+
+@using System.Threading.Tasks
+@model WebApplication17.ViewModels.AddRequestViewModel
+
+@{
+    ViewData["Title"] = "Create";
+   
+}
+
+<h2>Create</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div class="form-horizontal">
+        <h4>Requests</h4>
+        <hr />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group">
+            <label asp-for="Type" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <select asp-for="Type" asp-items="Html.GetEnumSelectList<RequestsType>()" class="form-control"></select>
+                <span asp-validation-for="Type" class="text-danger" />
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label asp-for="Amount" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <input asp-for="Amount" class="form-control" />
+                <span asp-validation-for="Amount" class="text-danger" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="IBAN" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <input asp-for="IBAN" class="form-control" />
+                <span asp-validation-for="IBAN" class="text-danger" />
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label asp-for="TransactionTime" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <input asp-for="TransactionTime" class="form-control" />
+                <span asp-validation-for="TransactionTime" class="text-danger" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="BankId" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+               
+                <select asp-for="BankId" asp-items="@Model.BankList"></select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="CountryId" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+               
+                <select asp-for="CountryId" asp-items="@Model.CountryList"></select>
+
+
+                <span asp-validation-for="CountryList" class="text-danger" />
+            </div>
+        </div>
+        
+       
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -43,19 +43,30 @@ namespace WebApplication17
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddIdentity<ApplicationUser, IdentityRole>(c =>
+                    {
+                        c.Password.RequireDigit = true;
+                        c.Password.RequireLowercase = false;
+                        c.Password.RequireNonAlphanumeric = false;
+                        c.Password.RequireUppercase = false;
+                        c.Password.RequiredLength = 6;
+                    }
+                )
                 .AddEntityFrameworkStores<ApplicationDbContext>()
+                
                 .AddDefaultTokenProviders();
+            
 
             services.AddMvc();
 
             // Add application services.
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
+            services.AddTransient<DbInitializer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, DbInitializer initializer)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -83,6 +94,8 @@ namespace WebApplication17
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            initializer.Initialize(false);
         }
     }
 }

@@ -10,6 +10,7 @@ namespace WebApplication17.Controllers
     {
         public IActionResult Index()
         {
+
             return View();
         }
 

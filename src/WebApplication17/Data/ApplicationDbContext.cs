@@ -13,6 +13,7 @@ namespace WebApplication17.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+            
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -22,5 +23,15 @@ namespace WebApplication17.Data
             // For example, you can rename the ASP.NET Identity table names and more.
             // Add your customizations after calling base.OnModelCreating(builder);
         }
+
+        public DbSet<Request> Requests { get; set; }
+
+        public DbSet<Bank> Banks { get; set; }
+
+        public DbSet<Country> Countries { get; set; }
+
+        public DbSet<RequiredDocument> RequiredDocuments { get; set; }
     }
+
+  
 }

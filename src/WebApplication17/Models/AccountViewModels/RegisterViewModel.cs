@@ -3,25 +3,30 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 
 namespace WebApplication17.Models.AccountViewModels
 {
     public class RegisterViewModel
     {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
+        
 
         [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Password)]
-        [Display(Name = "Password")]
-        public string Password { get; set; }
+      
+        [Display(Name = "رقم الهوية")]
+        [StringLength(14, ErrorMessage = "رقم الهوية يجب ان يكون من 10 الى 14 خانة")]
+        public string NationalId { get; set; }
 
-        [DataType(DataType.Password)]
-        [Display(Name = "Confirm password")]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-        public string ConfirmPassword { get; set; }
+        [Required]
+
+        [Display(Name = "رقم الجوال")]
+        [StringLength(10,ErrorMessage = "رقم الجوال يجب ان يكون من 10 خانات و يبدأ ب 05")]
+        public string PhoneNumber { get; set; }
+        
+        [Required]
+        [StringLength(50, ErrorMessage = "50 characters max")]
+        public string FullName { get; set; }
+
+
     }
 }

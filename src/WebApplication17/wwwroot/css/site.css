@@ -48,3 +48,16 @@ textarea {
     display: none
   }
 }
+
+
+.header11 {
+    /*position: fixed ;*/
+    background: url('images/headerBG.gif') repeat-x;
+    width: 100%;
+    /*top: 0px;*/
+    height: 225px;
+    display: table;
+    /*position: relative;*/
+    /*z-index: 1000;*/
+    position: static;
+}
