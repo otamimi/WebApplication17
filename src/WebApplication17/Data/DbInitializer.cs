@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using WebApplication17.Models;
 
@@ -18,11 +19,12 @@ namespace WebApplication17.Data
             context = _context;
             roleManager = _roleManager;
         }
-        public async void Initialize(bool fresh)
+        public async void Initialize(bool fresh, UserManager<ApplicationUser> userManager)
         {
             if (fresh)
             {
                 // todo:delete all data from database
+                context.Database.EnsureDeleted();
             }
             context.Database.EnsureCreated();
 
@@ -45,6 +47,7 @@ namespace WebApplication17.Data
 
             var usersnames = new[] {"Shahrani", "Riyadh", "Saleh", "student1", "applicant1"};
             var userStore = new UserStore<ApplicationUser>(context);
+            
             foreach (var username in usersnames)
             {
                 if (context.Users.Any(u => u.UserName == username)) continue;
@@ -57,11 +60,11 @@ namespace WebApplication17.Data
                     NationalId = idnumber.Substring(0, 12),
                     PhoneNumber = "3213216546"
                 };
-
-                var result = await userStore.CreateAsync(user);
+                var res =await  userManager.CreateAsync(user, "123123");
+               // var result = await userStore.CreateAsync(user);
 
             }
-
+            context.SaveChanges();
 
 
             #endregion
@@ -123,28 +126,7 @@ namespace WebApplication17.Data
 
             context.SaveChanges();
 
-            #region request
-
-            var applicant = context.Users.First(c => c.UserName.ToLower() == "applicant1");
-            var employee = context.Users.First(c => c.UserName.ToLower() == "riyadh");
-
-            var request = new Request
-            { 
-                Amount = 999,
-               Bank = bank,
-                Applicant = applicant,
-                Country = context.Countries.First(),
-                Employee = employee,
-                IBAN = "SA0380000000608010167519",
-                Status = RequestStatus.Recieved,
-                Type = RequestType.Refund
-            };
-
-            context.Requests.Add(request);
-
-            #endregion
-
-            context.SaveChanges();
+            
 
             
         }

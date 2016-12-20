@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -34,24 +35,66 @@ namespace WebApplication17.Controllers
             _environment = environment;
         }
 
+        [Authorize(Roles = "Applicant, Role1, Role2, Role3")]
         // GET: Requests
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder)
         {
-            var model = new List<Request>();
-            foreach (var contextRequest in _context.Requests)
-            {
-                model.Add(contextRequest);
-            }
-            var vvv = await _context.Database.ExecuteSqlCommandAsync("Select * from Requests");
-            var v =  _context.Requests.ToList();
-           return View(v);
-            return User.Identity.IsAuthenticated
-                ? (User.IsInRole("Role1, Role2, Role3")
-                    ? View(await _context.Requests.ToListAsync())
-                    : View(await _context.Requests.Where(x => x.Applicant.UserName == User.Identity.Name).ToListAsync()))
-                : View();
-        }
+            var model = new List<RefundsViewModel>();
+          
+            var requests = await _context.Requests
+                .Include(x => x.Applicant)
+                .Include(x => x.Bank)
+                .Include(x => x.Country).ToListAsync();
+            if (User.IsInRole("Applicant"))
+                requests =  requests.Where(x => x.Applicant.UserName == User.Identity.Name).ToList();
 
+            
+            ViewData["NameSortParm"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["SatusSortParm"] = sortOrder == "Status" ? "status_desc" : "Status";
+            ViewData["TypeSortParm"] = sortOrder == "Type" ? "type_desc" : "Type";
+
+            //todo figure out sorting.
+            //switch (sortOrder)
+            //{
+            //    case "name_desc":
+            //        requests = (requests.OrderByDescending(s => s.Applicant.FullName);
+            //        break;
+            //    case "Date":
+            //        model = requests.OrderBy(s => s.TransactionTime);
+            //        break;
+            //    case "status_desc":
+            //        model = requests.OrderByDescending(s => s.Status);
+            //        break;
+            //    case "type_desc":
+            //        model = requests.OrderByDescending(s => s.Type);
+            //        break;
+            //    default:
+            //        model = requests.OrderBy(s => s.TransactionTime);
+            //        break;
+            //}
+            var  orderedRequests = requests.OrderBy(x => x.Status);
+            
+            model.AddRange(orderedRequests.Select(request => new RefundsViewModel()
+            {
+                Id = request.Id,
+                NationalIdNumber = request.Applicant.NationalId,
+                Type = request.Type,
+                IBAN = request.IBAN,
+                Status = request.Status,
+                Amount = request.Amount,
+                TransactionTime = request.TransactionTime,
+                ApplicantName = request.Applicant.FullName,
+                BankName = request.Bank.ArabicName,
+                CountryName = request.Country.Name,
+                EmployeeName = request.Employee?.FullName
+            }));
+
+            return View(model);
+
+          
+        }
+        [Authorize(Roles = "Applicant, Role1, Role2, Role3")]
         // GET: Requests/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -60,13 +103,37 @@ namespace WebApplication17.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Requests.SingleOrDefaultAsync(m => m.Id == id);
-            if (request == null)
+            var request = await _context.Requests.Include(x => x.Applicant)
+                .Include(x => x.Bank)
+                .Include(x => x.Country).SingleOrDefaultAsync(m => m.Id == id);
+            if (request == null) return NotFound();
+            var model = new RefundsViewModel
             {
-                return NotFound();
-            }
+                Id = request.Id,
+                NationalIdNumber = request.Applicant.NationalId,
+                Type = request.Type,
+                IBAN = request.IBAN,
+                Status = request.Status,
+                Amount = request.Amount,
+                TransactionTime = request.TransactionTime,
+                ApplicantName = request.Applicant.FullName,
+                BankName = request.Bank.ArabicName,
+                CountryName = request.Country.Name,
+                EmployeeName = request.Employee?.FullName
+            };
 
-            return View(request);
+
+            return View(model);
+        }
+
+        public JsonResult CanCreate()
+        {
+
+            return Json(_context.Requests.Any(r =>
+                      r.Applicant.UserName == User.Identity.Name && (
+                      r.Status == RequestStatus.Accepted ||
+                      r.Status == RequestStatus.Approved ||
+                      r.Status == RequestStatus.Recieved)));
         }
         [Authorize(Roles = "Applicant")]
         // GET: Requests/Create
@@ -78,7 +145,7 @@ namespace WebApplication17.Controllers
                        r.Status == RequestStatus.Accepted ||
                        r.Status == RequestStatus.Approved ||
                        r.Status == RequestStatus.Recieved));
-            if (hasActiveRequest) return RedirectToAction("Index");
+            if (hasActiveRequest) return Ok(false);
 
             var countries = _context.Countries.OrderBy(c => c.Name).Select(x => new {Id = x.Id, Value = x.Name});
             var banks = _context.Banks.OrderBy(c => c.ArabicName).Select(x => new {Id = x.Id, Value = x.ArabicName});

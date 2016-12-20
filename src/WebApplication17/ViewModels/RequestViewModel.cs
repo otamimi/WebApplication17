@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WebApplication17.Models;
@@ -22,9 +20,8 @@ namespace WebApplication17.ViewModels
         [Display(Name = "نوع الطلب")]
         public RequestType Type { get; set; }
 
-     //   [Required]
-        [Display(Name = " حساب المصدر")]
-        public BankAccount Account { get; set; }
+   
+       
 
        // [Required]
         [Display(Name = "حالة الطلب")]
@@ -52,11 +49,16 @@ namespace WebApplication17.ViewModels
 
         
     }
-    public class ViewRequestsViewModel
+    public class  RequestsViewModel
     {
+
+        public int Id { get; set; }
         [Display(Name = "المبلغ")]
         public decimal Amount { get; set; }
 
+
+        [Display(Name = "رقم الهوية الوطنية/الاقامة")]
+        public string NationalIdNumber { get; set; }
         [Display(Name = "تاريخ العملية")]
 
         public DateTime TransactionTime { get; set; }
@@ -66,27 +68,26 @@ namespace WebApplication17.ViewModels
         [Display(Name = "نوع الطلب")]
         public RequestType Type { get; set; }
 
-        [Display(Name = " حساب المصدر")]
-        public BankAccount Account { get; set; }
+        
 
         [Display(Name = "حالة الطلب")]
         public RequestStatus Status { get; set; }
 
         [Display(Name = "اسم مقدم الطلب")]
-        public ApplicationUser Applicant { get; set; }
+        public string ApplicantName { get; set; }
         [Display(Name = "اسم الموظف")]
-        public ApplicationUser Employee { get; set; }
+        public string EmployeeName { get; set; }
 
 
         [Display(Name = "رقم الآيبان")]
         public string IBAN { get; set; }
 
         [Display(Name = "البنك")]
-        public Bank Bank { get; set; }
+        public string BankName { get; set; }
        
 
         [Display(Name = "الدولة")]
-        public Country Country { get; set; }
+        public string CountryName { get; set; }
       
 
 

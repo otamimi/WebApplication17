@@ -8,8 +8,8 @@ using WebApplication17.Data;
 namespace WebApplication17.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20161216105401_init")]
-    partial class init
+    [Migration("20161219073359_19dec-1")]
+    partial class _19dec1
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
