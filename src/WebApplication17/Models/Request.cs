@@ -6,30 +6,38 @@ namespace WebApplication17.Models
 {
     public class Request
     {
-       
+      
+
         [Key]
         public int Id { get; set; }
+
         [Required]
-        public  ApplicationUser Applicant{ get; set; }
-       // [Required]
-        public  ApplicationUser Employee { get; set; }
+        public ApplicationUser Applicant { get; set; }
+
+        // [Required]
+        public ApplicationUser Employee { get; set; }
+
         [Required]
         public RequestStatus Status { get; set; }
-       [Required]
+
+        [Required]
         public RequestType Type { get; set; }
-       [Required]
+
+        [Required]
         public decimal Amount { get; set; }
-       
+
         public List<Note> Notes { get; set; }
+
         [Required]
-        public virtual Country Country { get; set; }
-        
+        public Country Country { get; set; }
+
         public DateTime TransactionTime { get; set; }
+
         [Required]
-        public virtual Bank Bank { get; set; }
+        public Bank Bank { get; set; }
 
-       // public file Type1 { get; set; }
+        // public file Type1 { get; set; }
 
-        
+
     }
 }

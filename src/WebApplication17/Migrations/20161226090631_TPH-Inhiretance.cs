@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace WebApplication17.Migrations
 {
-    public partial class _19dec1 : Migration
+    public partial class TPHInhiretance : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -72,7 +72,7 @@ namespace WebApplication17.Migrations
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     ArabicName = table.Column<string>(nullable: true),
                     EnglishName = table.Column<string>(nullable: true),
-                    Local = table.Column<bool>(nullable: false)
+                    Type = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -214,16 +214,27 @@ namespace WebApplication17.Migrations
                     ApplicantId = table.Column<string>(nullable: false),
                     BankId = table.Column<int>(nullable: false),
                     CountryId = table.Column<int>(nullable: false),
+                    Discriminator = table.Column<string>(nullable: false),
                     EmployeeId = table.Column<string>(nullable: true),
-                    IBAN = table.Column<string>(nullable: false),
-                    PayrollId = table.Column<int>(nullable: true),
                     Status = table.Column<int>(nullable: false),
                     TransactionTime = table.Column<DateTime>(nullable: false),
-                    Type = table.Column<int>(nullable: false)
+                    Type = table.Column<int>(nullable: false),
+                    DepositorName = table.Column<string>(nullable: true),
+                    FromStudentNumber = table.Column<string>(nullable: true),
+                    SourceAccountNumber = table.Column<string>(nullable: true),
+                    ToStudentNumber = table.Column<string>(nullable: true),
+                    IBAN = table.Column<string>(nullable: true),
+                    PayrollId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Requests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Requests_Payroll_PayrollId",
+                        column: x => x.PayrollId,
+                        principalTable: "Payroll",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Requests_AspNetUsers_ApplicantId",
                         column: x => x.ApplicantId,
@@ -248,12 +259,6 @@ namespace WebApplication17.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Requests_Payroll_PayrollId",
-                        column: x => x.PayrollId,
-                        principalTable: "Payroll",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -262,12 +267,19 @@ namespace WebApplication17.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    AddedById = table.Column<string>(nullable: false),
                     Content = table.Column<string>(nullable: true),
                     RequestId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Note", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Note_AspNetUsers_AddedById",
+                        column: x => x.AddedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Note_Requests_RequestId",
                         column: x => x.RequestId,
@@ -316,6 +328,11 @@ namespace WebApplication17.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Note_AddedById",
+                table: "Note",
+                column: "AddedById");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Note_RequestId",

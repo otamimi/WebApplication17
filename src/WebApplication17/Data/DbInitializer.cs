@@ -12,24 +12,25 @@ namespace WebApplication17.Data
 {
     public class DbInitializer
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext applicationDbContextcontext;
         private readonly RoleManager<IdentityRole> roleManager;
-        public DbInitializer(ApplicationDbContext _context, RoleManager<IdentityRole> _roleManager)
+        public DbInitializer( RoleManager<IdentityRole> roleManager,   ApplicationDbContext applicationDbContextcontext)
         {
-            context = _context;
-            roleManager = _roleManager;
+         
+            this.roleManager = roleManager;
+            this.applicationDbContextcontext = applicationDbContextcontext;
         }
         public async void Initialize(bool fresh, UserManager<ApplicationUser> userManager)
         {
             if (fresh)
             {
                 // todo:delete all data from database
-                context.Database.EnsureDeleted();
+                applicationDbContextcontext.Database.EnsureDeleted();
             }
-            context.Database.EnsureCreated();
+            applicationDbContextcontext.Database.EnsureCreated();
 
             // Look for any students.
-            if (context.Users.Any())
+            if (applicationDbContextcontext.Users.Any())
                 return; // DB has been seeded
 
             #region seed users and roles
@@ -41,16 +42,16 @@ namespace WebApplication17.Data
             foreach (var role in roles)
             {
              
-                if (!context.Roles.Any(r => r.Name == role))
+                if (!applicationDbContextcontext.Roles.Any(r => r.Name == role))
                     await roleManager.CreateAsync(new IdentityRole(role));
             }
 
             var usersnames = new[] {"Shahrani", "Riyadh", "Saleh", "student1", "applicant1"};
-            var userStore = new UserStore<ApplicationUser>(context);
+            var userStore = new UserStore<ApplicationUser>(applicationDbContextcontext);
             
             foreach (var username in usersnames)
             {
-                if (context.Users.Any(u => u.UserName == username)) continue;
+                if (applicationDbContextcontext.Users.Any(u => u.UserName == username)) continue;
                 var idnumber = Guid.NewGuid().ToString();
                 var user = new ApplicationUser
                 {
@@ -60,11 +61,14 @@ namespace WebApplication17.Data
                     NationalId = idnumber.Substring(0, 12),
                     PhoneNumber = "3213216546"
                 };
+                
                 var res =await  userManager.CreateAsync(user, "123123");
-               // var result = await userStore.CreateAsync(user);
+                if(username== "applicant1")
+                await userManager.AddToRoleAsync(user, "Applicant");
+                // var result = await userStore.CreateAsync(user);
 
             }
-            context.SaveChanges();
+            applicationDbContextcontext.SaveChanges();
 
 
             #endregion
@@ -77,8 +81,8 @@ namespace WebApplication17.Data
 
             #region country
 
-            if (!context.Countries.Any(country => country.Name.ToLower() == "KSA"))
-                context.Countries.Add(new Country {Name = "KSA"});
+            if (!applicationDbContextcontext.Countries.Any(country => country.Name.ToLower() == "KSA"))
+                applicationDbContextcontext.Countries.Add(new Country {Name = "KSA"});
 
             #endregion
 
@@ -86,26 +90,26 @@ namespace WebApplication17.Data
 
            
 
-            if (!context.RequiredDocuments.Any(doc => doc.Name == "PhotoID"))
-                context.RequiredDocuments.Add(new RequiredDocument
+            if (!applicationDbContextcontext.RequiredDocuments.Any(doc => doc.Name == "PhotoID"))
+                applicationDbContextcontext.RequiredDocuments.Add(new RequiredDocument
                 {
                     Name = "PhotoID",
                     Description = "seedData"
                 });
-            if (!context.RequiredDocuments.Any(doc => doc.Name == "Reciept"))
-                context.RequiredDocuments.Add(new RequiredDocument
+            if (!applicationDbContextcontext.RequiredDocuments.Any(doc => doc.Name == "Reciept"))
+                applicationDbContextcontext.RequiredDocuments.Add(new RequiredDocument
                 {
                     Name = "Reciept",
                     Description = "seedData"
                 });
-            if (!context.RequiredDocuments.Any(doc => doc.Name == "DeathCertificate"))
-                context.RequiredDocuments.Add(new RequiredDocument
+            if (!applicationDbContextcontext.RequiredDocuments.Any(doc => doc.Name == "DeathCertificate"))
+                applicationDbContextcontext.RequiredDocuments.Add(new RequiredDocument
                 {
                     Name = "DeathCertificate",
                     Description = "seedData"
                 });
-            if (!context.RequiredDocuments.Any(doc => doc.Name == "procuration")) // wakala or tafweed
-                context.RequiredDocuments.Add(new RequiredDocument
+            if (!applicationDbContextcontext.RequiredDocuments.Any(doc => doc.Name == "procuration")) // wakala or tafweed
+                applicationDbContextcontext.RequiredDocuments.Add(new RequiredDocument
                 {
                     Name = "procuration",
                     Description = "seedData"
@@ -115,16 +119,16 @@ namespace WebApplication17.Data
 
             #region bank and bankaccount
 
-            var bank = new Bank {ArabicName = "SeedBank", Local = true};
-            if (!context.Banks.Any())
+            var bank = new Bank {ArabicName = "SeedBank", Type = BankType.Local};
+            if (!applicationDbContextcontext.Banks.Any())
             {
-                context.Banks.Add(bank);
+                applicationDbContextcontext.Banks.Add(bank);
                 
             }
 
             #endregion
 
-            context.SaveChanges();
+            applicationDbContextcontext.SaveChanges();
 
             
 

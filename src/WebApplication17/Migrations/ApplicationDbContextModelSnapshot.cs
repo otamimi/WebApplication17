@@ -185,7 +185,7 @@ namespace WebApplication17.Migrations
 
                     b.Property<string>("EnglishName");
 
-                    b.Property<bool>("Local");
+                    b.Property<int>("Type");
 
                     b.HasKey("Id");
 
@@ -209,11 +209,16 @@ namespace WebApplication17.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<string>("AddedById")
+                        .IsRequired();
+
                     b.Property<string>("Content");
 
                     b.Property<int?>("RequestId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AddedById");
 
                     b.HasIndex("RequestId");
 
@@ -246,12 +251,10 @@ namespace WebApplication17.Migrations
                     b.Property<int?>("CountryId")
                         .IsRequired();
 
-                    b.Property<string>("EmployeeId");
-
-                    b.Property<string>("IBAN")
+                    b.Property<string>("Discriminator")
                         .IsRequired();
 
-                    b.Property<int?>("PayrollId");
+                    b.Property<string>("EmployeeId");
 
                     b.Property<int>("Status");
 
@@ -269,9 +272,9 @@ namespace WebApplication17.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("PayrollId");
-
                     b.ToTable("Requests");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Request");
                 });
 
             modelBuilder.Entity("WebApplication17.Models.RequiredDocument", b =>
@@ -287,6 +290,43 @@ namespace WebApplication17.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RequiredDocuments");
+                });
+
+            modelBuilder.Entity("WebApplication17.Models.Misfund", b =>
+                {
+                    b.HasBaseType("WebApplication17.Models.Request");
+
+                    b.Property<string>("DepositorName")
+                        .IsRequired();
+
+                    b.Property<string>("FromStudentNumber")
+                        .IsRequired();
+
+                    b.Property<string>("SourceAccountNumber")
+                        .IsRequired();
+
+                    b.Property<string>("ToStudentNumber")
+                        .IsRequired();
+
+                    b.ToTable("Misfund");
+
+                    b.HasDiscriminator().HasValue("Misfund");
+                });
+
+            modelBuilder.Entity("WebApplication17.Models.Refund", b =>
+                {
+                    b.HasBaseType("WebApplication17.Models.Request");
+
+                    b.Property<string>("IBAN")
+                        .IsRequired();
+
+                    b.Property<int?>("PayrollId");
+
+                    b.HasIndex("PayrollId");
+
+                    b.ToTable("Refund");
+
+                    b.HasDiscriminator().HasValue("Refund");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityRoleClaim<string>", b =>
@@ -328,6 +368,11 @@ namespace WebApplication17.Migrations
 
             modelBuilder.Entity("WebApplication17.Models.Note", b =>
                 {
+                    b.HasOne("WebApplication17.Models.ApplicationUser", "AddedBy")
+                        .WithMany()
+                        .HasForeignKey("AddedById")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("WebApplication17.Models.Request")
                         .WithMany("Notes")
                         .HasForeignKey("RequestId");
@@ -353,7 +398,10 @@ namespace WebApplication17.Migrations
                     b.HasOne("WebApplication17.Models.ApplicationUser", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId");
+                });
 
+            modelBuilder.Entity("WebApplication17.Models.Refund", b =>
+                {
                     b.HasOne("WebApplication17.Models.Payroll", "Payroll")
                         .WithMany()
                         .HasForeignKey("PayrollId");

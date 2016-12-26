@@ -12,6 +12,12 @@ namespace WebApplication17.Models
         public int Id { get; set; }
         public string ArabicName { get; set; }
         public string EnglishName { get; set; }
-        public bool Local { get; set; }
+        public BankType Type { get; set; }
+    }
+
+     public enum BankType
+    {
+        Local,
+        Offshore
     }
 }

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using WebApplication17.Data;
 using WebApplication17.Models;
 using WebApplication17.Services;
+using IdentityDbContext = WebApplication17.Data.ApplicationDbContext;
 
 namespace WebApplication17
 {
@@ -41,8 +42,9 @@ namespace WebApplication17
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
+           
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddIdentity<ApplicationUser, IdentityRole>(c =>
                     {
@@ -53,7 +55,7 @@ namespace WebApplication17
                         c.Password.RequiredLength = 6;
                     }
                 )
-                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddEntityFrameworkStores<IdentityDbContext>()
                 
                 .AddDefaultTokenProviders();
             

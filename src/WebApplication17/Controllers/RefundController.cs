@@ -18,9 +18,9 @@ using WebApplication17.ViewModels;
 
 namespace WebApplication17.Controllers
 {
-    public class RequestsController : Controller
+    public class RefundController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _applicationDbContextcontext;
         private readonly UserManager<ApplicationUser> _userManager;
         private IHostingEnvironment _environment;
 
@@ -28,25 +28,26 @@ namespace WebApplication17.Controllers
         {
             return _userManager.GetUserAsync(HttpContext.User);
         }
-        public RequestsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IHostingEnvironment environment)
+        public RefundController( UserManager<ApplicationUser> userManager, IHostingEnvironment environment, ApplicationDbContext applicationDbContextcontext )
         {
-            _context = context;
+            
             _userManager = userManager;
             _environment = environment;
+            _applicationDbContextcontext = applicationDbContextcontext;
         }
 
         [Authorize(Roles = "Applicant, Role1, Role2, Role3")]
-        // GET: Requests
+        // GET: Refunds
         public async Task<IActionResult> Index(string sortOrder)
         {
             var model = new List<RefundsViewModel>();
           
-            var requests = await _context.Requests
+            var refunds = await _applicationDbContextcontext.Requests.OfType<Refund>()
                 .Include(x => x.Applicant)
                 .Include(x => x.Bank)
                 .Include(x => x.Country).ToListAsync();
             if (User.IsInRole("Applicant"))
-                requests =  requests.Where(x => x.Applicant.UserName == User.Identity.Name).ToList();
+                refunds =  refunds.Where(x => x.Applicant.UserName == User.Identity.Name).ToList();
 
             
             ViewData["NameSortParm"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
@@ -55,6 +56,8 @@ namespace WebApplication17.Controllers
             ViewData["TypeSortParm"] = sortOrder == "Type" ? "type_desc" : "Type";
 
             //todo figure out sorting.
+            #region sorting
+
             //switch (sortOrder)
             //{
             //    case "name_desc":
@@ -73,21 +76,23 @@ namespace WebApplication17.Controllers
             //        model = requests.OrderBy(s => s.TransactionTime);
             //        break;
             //}
-            var  orderedRequests = requests.OrderBy(x => x.Status);
+
+            #endregion
+            var  refundRequests = refunds.OrderBy(x => x.Status);
             
-            model.AddRange(orderedRequests.Select(request => new RefundsViewModel()
+            model.AddRange(refundRequests.Select(refundRequest => new RefundsViewModel()
             {
-                Id = request.Id,
-                NationalIdNumber = request.Applicant.NationalId,
-                Type = request.Type,
-                IBAN = request.IBAN,
-                Status = request.Status,
-                Amount = request.Amount,
-                TransactionTime = request.TransactionTime,
-                ApplicantName = request.Applicant.FullName,
-                BankName = request.Bank.ArabicName,
-                CountryName = request.Country.Name,
-                EmployeeName = request.Employee?.FullName
+                Id = refundRequest.Id,
+                NationalIdNumber = refundRequest.Applicant.NationalId,
+                Type = refundRequest.Type,
+                IBAN = refundRequest.IBAN,
+                Status = refundRequest.Status,
+                Amount = refundRequest.Amount,
+                TransactionTime = refundRequest.TransactionTime,
+                ApplicantName = refundRequest.Applicant.FullName,
+                BankName = refundRequest.Bank.ArabicName,
+                CountryName = refundRequest.Country.Name,
+                EmployeeName = refundRequest.Employee?.FullName
             }));
 
             return View(model);
@@ -103,23 +108,23 @@ namespace WebApplication17.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Requests.Include(x => x.Applicant)
+            var refund = await _applicationDbContextcontext.Requests.OfType<Refund>().Include(x => x.Applicant)
                 .Include(x => x.Bank)
                 .Include(x => x.Country).SingleOrDefaultAsync(m => m.Id == id);
-            if (request == null) return NotFound();
+            if (refund == null) return NotFound();
             var model = new RefundsViewModel
             {
-                Id = request.Id,
-                NationalIdNumber = request.Applicant.NationalId,
-                Type = request.Type,
-                IBAN = request.IBAN,
-                Status = request.Status,
-                Amount = request.Amount,
-                TransactionTime = request.TransactionTime,
-                ApplicantName = request.Applicant.FullName,
-                BankName = request.Bank.ArabicName,
-                CountryName = request.Country.Name,
-                EmployeeName = request.Employee?.FullName
+                Id = refund.Id,
+                NationalIdNumber = refund.Applicant.NationalId,
+                Type = refund.Type,
+                IBAN = refund.IBAN,
+                Status = refund.Status,
+                Amount = refund.Amount,
+                TransactionTime = refund.TransactionTime,
+                ApplicantName = refund.Applicant.FullName,
+                BankName = refund.Bank.ArabicName,
+                CountryName = refund.Country.Name,
+                EmployeeName = refund.Employee?.FullName
             };
 
 
@@ -129,7 +134,7 @@ namespace WebApplication17.Controllers
         public JsonResult CanCreate()
         {
 
-            return Json(_context.Requests.Any(r =>
+            return Json(_applicationDbContextcontext.Requests.Any(r =>
                       r.Applicant.UserName == User.Identity.Name && (
                       r.Status == RequestStatus.Accepted ||
                       r.Status == RequestStatus.Approved ||
@@ -140,16 +145,16 @@ namespace WebApplication17.Controllers
         public IActionResult Create()
         {
             var hasActiveRequest =
-                _context.Requests.Any(r =>
+                _applicationDbContextcontext.Requests.Any(r =>
                        r.Applicant.UserName == User.Identity.Name && (
                        r.Status == RequestStatus.Accepted ||
                        r.Status == RequestStatus.Approved ||
                        r.Status == RequestStatus.Recieved));
             if (hasActiveRequest) return Ok(false);
 
-            var countries = _context.Countries.OrderBy(c => c.Name).Select(x => new {Id = x.Id, Value = x.Name});
-            var banks = _context.Banks.OrderBy(c => c.ArabicName).Select(x => new {Id = x.Id, Value = x.ArabicName});
-            var model = new AddRequestViewModel()
+            var countries = _applicationDbContextcontext.Countries.OrderBy(c => c.Name).Select(x => new {Id = x.Id, Value = x.Name});
+            var banks = _applicationDbContextcontext.Banks.OrderBy(c => c.ArabicName).Select(x => new {Id = x.Id, Value = x.ArabicName});
+            var model = new AddRefundViewModel()
             {
                 BankList = new SelectList(banks, "Id", "Value"),
                 CountryList = new SelectList(countries, "Id", "Value")
@@ -163,29 +168,29 @@ namespace WebApplication17.Controllers
         [Authorize(Roles = "Applicant")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Amount,TransactionTime,CountryId,Type,IBAN,BankId")] AddRequestViewModel request, ICollection<IFormFile> files)
+        public async Task<IActionResult> Create([Bind("Id,Amount,TransactionTime,CountryId,Type,IBAN,BankId")] AddRefundViewModel refund, ICollection<IFormFile> files)
 
         {
-            if (!ModelState.IsValid) return View(request);
+            if (!ModelState.IsValid) return View(refund);
          
-            //user is only allowed to create one request at a time. when a request status is "Paid" "Canceled" or "Rejected" it is considered finished, if the status is  " Recieved","Accepted" or "Approved" it is considered Open. so only allow if finished.
+            //user is only allowed to create one refund at a time. when a refund status is "Paid" "Canceled" or "Rejected" it is considered finished, if the status is  " Recieved","Accepted" or "Approved" it is considered Open. so only allow if finished.
 
-            var req = new Request()
+            var newRefund = new Refund()
             {
                 Applicant = await GetCurrentUserAsync(),
-                //Country = request.Countries,
-                Status = request.Status,
-                Amount = request.Amount,
-                TransactionTime = request.TransactionTime,
-                Type = request.Type,
-                IBAN = request.IBAN,
-                Bank = _context.Banks.FirstOrDefault(b=>b.Id==request.BankId),
-                Country = _context.Countries.FirstOrDefault(c=>c.Id==request.CountryId)
-               // Banks = request.BanksList.
+                
+                Status = refund.Status,
+                Amount = refund.Amount,
+                TransactionTime = refund.TransactionTime,
+                Type = refund.Type,
+                IBAN = refund.IBAN,
+                Bank = _applicationDbContextcontext.Banks.FirstOrDefault(b=>b.Id== refund.BankId),
+                Country = _applicationDbContextcontext.Countries.FirstOrDefault(c=>c.Id== refund.CountryId)
+               
                 
             };
-            _context.Add(req);
-            await _context.SaveChangesAsync();
+            _applicationDbContextcontext.Add(newRefund);
+            await _applicationDbContextcontext.SaveChangesAsync();
             
             return RedirectToAction("Index");
         }
@@ -198,7 +203,7 @@ namespace WebApplication17.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Requests.SingleOrDefaultAsync(m => m.Id == id);
+            var request = await _applicationDbContextcontext.Requests.SingleOrDefaultAsync(m => m.Id == id);
             if (request == null)
             {
                 return NotFound();
@@ -222,8 +227,8 @@ namespace WebApplication17.Controllers
             {
                 try
                 {
-                    _context.Update(request);
-                    await _context.SaveChangesAsync();
+                    _applicationDbContextcontext.Update(request);
+                    await _applicationDbContextcontext.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -249,7 +254,7 @@ namespace WebApplication17.Controllers
                 return NotFound();
             }
 
-            var request = await _context.Requests.SingleOrDefaultAsync(m => m.Id == id);
+            var request = await _applicationDbContextcontext.Requests.SingleOrDefaultAsync(m => m.Id == id);
             if (request == null)
             {
                 return NotFound();
@@ -263,15 +268,15 @@ namespace WebApplication17.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var request = await _context.Requests.SingleOrDefaultAsync(m => m.Id == id);
-            _context.Requests.Remove(request);
-            await _context.SaveChangesAsync();
+            var request = await _applicationDbContextcontext.Requests.SingleOrDefaultAsync(m => m.Id == id);
+            _applicationDbContextcontext.Requests.Remove(request);
+            await _applicationDbContextcontext.SaveChangesAsync();
             return RedirectToAction("Index");
         }
 
         private bool RequestExists(int id)
         {
-            return _context.Requests.Any(e => e.Id == id);
+            return _applicationDbContextcontext.Requests.Any(e => e.Id == id);
         }
     }
 }

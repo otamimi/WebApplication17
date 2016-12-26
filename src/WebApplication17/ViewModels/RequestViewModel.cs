@@ -5,7 +5,7 @@ using WebApplication17.Models;
 
 namespace WebApplication17.ViewModels
 {
-    public class AddRequestViewModel
+    public class AddRefundViewModel
     {
        [Required]
        [Range(1,10000)]
@@ -49,6 +49,14 @@ namespace WebApplication17.ViewModels
 
         
     }
+
+    public class RefundsViewModel : RequestsViewModel
+    {
+       
+        [Display(Name = "رقم الآيبان")]
+        public string IBAN { get; set; }
+        public Payroll Payroll { get; set; }
+    }
     public class  RequestsViewModel
     {
 
@@ -78,9 +86,8 @@ namespace WebApplication17.ViewModels
         [Display(Name = "اسم الموظف")]
         public string EmployeeName { get; set; }
 
-
-        [Display(Name = "رقم الآيبان")]
-        public string IBAN { get; set; }
+        [Display(Name = "نوع البنك")]
+        public bool LocalBank { get; set; }
 
         [Display(Name = "البنك")]
         public string BankName { get; set; }
@@ -106,7 +113,7 @@ namespace WebApplication17.ViewModels
 
         [Required]
         [Display(Name = "بنك محلي؟")]
-        public bool Local { get; set; }
+        public BankType Type { get; set; }
 
 
     }
