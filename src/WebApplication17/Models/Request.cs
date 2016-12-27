@@ -35,7 +35,7 @@ namespace WebApplication17.Models
 
         [Required]
         public Bank Bank { get; set; }
-
+       
         // public file Type1 { get; set; }
 
 

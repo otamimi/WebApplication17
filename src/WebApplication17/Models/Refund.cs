@@ -11,5 +11,9 @@ namespace WebApplication17.Models
         
         [Required]
         public string IBAN { get; set; }
+        [Required]
+        public string ToAccountHolderFullName { get; set; }
+
+        
     }
 }

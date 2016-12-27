@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApplication17.Data;
@@ -85,7 +86,7 @@ namespace WebApplication17.Controllers
                 Id = refundRequest.Id,
                 NationalIdNumber = refundRequest.Applicant.NationalId,
                 Type = refundRequest.Type,
-                IBAN = refundRequest.IBAN,
+                ToAccountIban = refundRequest.IBAN,
                 Status = refundRequest.Status,
                 Amount = refundRequest.Amount,
                 TransactionTime = refundRequest.TransactionTime,
@@ -117,7 +118,7 @@ namespace WebApplication17.Controllers
                 Id = refund.Id,
                 NationalIdNumber = refund.Applicant.NationalId,
                 Type = refund.Type,
-                IBAN = refund.IBAN,
+                ToAccountIban = refund.IBAN,
                 Status = refund.Status,
                 Amount = refund.Amount,
                 TransactionTime = refund.TransactionTime,
@@ -131,29 +132,38 @@ namespace WebApplication17.Controllers
             return View(model);
         }
 
-        public JsonResult CanCreate()
+        public ActionResult CanCreate()
+        {
+            return User.IsInRole("Applicant") && !_applicationDbContextcontext.Requests.Any(r =>
+                       r.Applicant.UserName == User.Identity.Name && (
+                           r.Status == RequestStatus.Accepted ||
+                           r.Status == RequestStatus.Approved ||
+                           r.Status == RequestStatus.Recieved))
+                ? (ActionResult) PartialView("CanCreate")
+                : new EmptyResult();
+        }
+
+        public bool HasOpenRequest()
         {
 
-            return Json(_applicationDbContextcontext.Requests.Any(r =>
-                      r.Applicant.UserName == User.Identity.Name && (
-                      r.Status == RequestStatus.Accepted ||
-                      r.Status == RequestStatus.Approved ||
-                      r.Status == RequestStatus.Recieved)));
+            return _applicationDbContextcontext.Requests.Any(r =>
+                r.Applicant.UserName == User.Identity.Name && (
+                    r.Status == RequestStatus.Accepted ||
+                    r.Status == RequestStatus.Approved ||
+                    r.Status == RequestStatus.Recieved));
+
         }
         [Authorize(Roles = "Applicant")]
         // GET: Requests/Create
         public IActionResult Create()
         {
-            var hasActiveRequest =
-                _applicationDbContextcontext.Requests.Any(r =>
-                       r.Applicant.UserName == User.Identity.Name && (
-                       r.Status == RequestStatus.Accepted ||
-                       r.Status == RequestStatus.Approved ||
-                       r.Status == RequestStatus.Recieved));
-            if (hasActiveRequest) return Ok(false);
-
-            var countries = _applicationDbContextcontext.Countries.OrderBy(c => c.Name).Select(x => new {Id = x.Id, Value = x.Name});
-            var banks = _applicationDbContextcontext.Banks.OrderBy(c => c.ArabicName).Select(x => new {Id = x.Id, Value = x.ArabicName});
+            if (HasOpenRequest()) return BadRequest("HasOpenRequest");
+            var countries =
+                _applicationDbContextcontext.Countries.OrderBy(c => c.Name)
+                    .Select(x => new {Id = x.Id, Value = x.Name});
+            var banks =
+                _applicationDbContextcontext.Banks.OrderBy(c => c.ArabicName)
+                    .Select(x => new {Id = x.Id, Value = x.ArabicName});
             var model = new AddRefundViewModel()
             {
                 BankList = new SelectList(banks, "Id", "Value"),
@@ -172,8 +182,9 @@ namespace WebApplication17.Controllers
 
         {
             if (!ModelState.IsValid) return View(refund);
-         
+
             //user is only allowed to create one refund at a time. when a refund status is "Paid" "Canceled" or "Rejected" it is considered finished, if the status is  " Recieved","Accepted" or "Approved" it is considered Open. so only allow if finished.
+            if (HasOpenRequest()) return BadRequest("HasOpenRequest");
 
             var newRefund = new Refund()
             {
@@ -194,24 +205,44 @@ namespace WebApplication17.Controllers
             
             return RedirectToAction("Index");
         }
-
+        [Authorize(Roles = "Role1, Role2, Role3")]
         // GET: Requests/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            if (!ModelState.IsValid) return View();
+            var refund = await _applicationDbContextcontext.Requests.OfType<Refund>()
+                .Include(x => x.Bank)
+                .Include(x => x.Payroll)
+                .Include(x => x.Country).SingleOrDefaultAsync(r => r.Id == id);
+            if (refund == null) return NotFound();
+            var countries =
+                _applicationDbContextcontext.Countries.OrderBy(c => c.Name)
+                    .Select(x => new {Id = x.Id, Value = x.Name});
+            var banks =
+                _applicationDbContextcontext.Banks.OrderBy(c => c.ArabicName)
+                    .Select(x => new {Id = x.Id, Value = x.ArabicName});
+            var model = new EditRefundViewModel
             {
-                return NotFound();
-            }
+                Id = refund.Id,
+                NationalIdNumber = refund.Applicant.NationalId,
+                Type = refund.Type,
+                ToAccountIban = refund.IBAN,
+                ToAccountHolderFullName = refund.ToAccountHolderFullName,
+                Status = refund.Status,
+                Amount = refund.Amount,
+                TransactionTime = refund.TransactionTime,
+                ApplicantName = refund.Applicant.FullName,
+                EmployeeName = refund.Employee?.FullName,
+                LocalBank = refund.Bank.Type,
+                BankList = new SelectList(banks, "Id", "Value", refund.Bank),
+                CountryList = new SelectList(countries, "Id", "Value", refund.Country),
+            };
 
-            var request = await _applicationDbContextcontext.Requests.SingleOrDefaultAsync(m => m.Id == id);
-            if (request == null)
-            {
-                return NotFound();
-            }
-            return View(request);
+
+            return View(model);
         }
 
-        // POST: Requests/Edit/5
+        // POST: Refunds/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]

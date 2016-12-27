@@ -65,6 +65,8 @@ namespace WebApplication17.Data
                 var res =await  userManager.CreateAsync(user, "123123");
                 if(username== "applicant1")
                 await userManager.AddToRoleAsync(user, "Applicant");
+                if(username== "Riyadh")
+                await userManager.AddToRoleAsync(user, "Role1");
                 // var result = await userStore.CreateAsync(user);
 
             }
